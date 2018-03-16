@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Popup with all the properties</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+	<script   src="https://code.jquery.com/jquery-3.3.1.min.js"   integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="   crossorigin="anonymous"></script>
+	<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+	<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
+	<style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+    </style>
+</head>
+<body>
+<div id="map"></div>           
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoidGhpbmthbWFwIiwiYSI6ImJHYVY0UlEifQ.EliFlu4-Cg0vfYRzaGQlCA';
+	
+	var map = new mapboxgl.Map({
+		container: 'map',
+		style: 'mapbox://styles/mapbox/streets-v9',
+		center: [-66.04706, 18.38390],
+		zoom: 12
+	});
+	map.on('load', function () {
+	
+		map.addSource('stations', {
+			type: 'geojson',
+			data: 'https://estuario.info/data/ebsj/geoj_estaciones_harold.php'
+		});   
+		map.addLayer({
+			"id": "stations",
+			"type": "circle",
+			"source": "stations",
+			"paint": {
+				 "circle-color": "#fff",
+				 "circle-radius": 5,
+				 "circle-opacity": 0.8,
+				 "circle-stroke-width": 2,
+				 "circle-stroke-color": "#404040"
+			}
+		});
+		/* Popup Function  */
+		map.on('click', function(e) {
+			
+			var popup = new mapboxgl.Popup();
+			
+			var features = map.queryRenderedFeatures(e.point, {
+				layers: ['stations']// Aqui puedes poner los layers individualmente si quieres utilizando los id eg ['barrios', 'anp']
+			});
+			
+			map.getCanvas().style.cursor = (features.length) ? 'pointer' : '';
+			
+			if (!features.length) {
+				popup.remove();
+				return;
+			};
+			
+			var properties = features[0].properties;
+			
+			var header = '<div class="titulo_logo"><strong>POPUP TITLE</strong></div><div id="info_content">';
+			
+			var footer = '</div><div id="info_footer"><em>Thinkamap rock my world!</em></div>';
+			
+			$.each(properties, function(key, value) {
+				header += '<b>' + prettify(key) + '</b>: ' + value + '</br>';
+			});
+			popup.setLngLat(e.lngLat).setHTML(header + footer).addTo(map);
+		});
+		// Change the cursor to a pointer when the mouse is over the layers.
+		map.on('mousemove', function(e) {
+			var features = map.queryRenderedFeatures(e.point, {
+				layers: ['stations']
+			});
+			map.getCanvas().style.cursor = (features.length) ? 'pointer' : '';
+		});
+	});
+	
+	//Function for replacing underscore characters in strings
+	function prettify(str) {
+	    return str.replace(/(_|^)([^_]?)/g, function(_, prep, letter) {
+	        return (prep && ' ') + letter.toUpperCase();
+	    });
+	}
+</script>
+</body>
+</html>
