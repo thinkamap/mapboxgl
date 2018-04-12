@@ -1,8 +1,8 @@
 <?php
-    $conn = new PDO('odbc:Driver={ODBC Driver 13 for SQL Server};Server=prvcugdb.database.windows.net;Database=prvcugdb; Uid=gisadmin;Pwd=Prvcu2018');
+    $conn = new PDO('odbc:Driver={ODBC Driver 13 for SQL Server};Server=example.com;Database=database; Uid=user;Pwd=password');
     
     # query
-    $query = $conn->query('SELECT * FROM rincon');
+    $query = $conn->query('SELECT * FROM table');
 	
 	# Empty geojson array
 	$geojson = array(
