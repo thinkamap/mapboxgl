@@ -49,12 +49,12 @@
 			            <tr>
 			                <th>Community</th>
 			                <th>Population</th>
-							<th>Males</th>
-							<th>Females</th>
+					<th>Males</th>
+					<th>Females</th>
 			            </tr>
 			        </thead>
 			    </table>
-    		</div>
+    			</div>
   		</div>
 	</div>
 	<!-- JS -->
@@ -84,7 +84,7 @@
     console.log(geojson)
     
     //Mapbox GL JS
-    mapboxgl.accessToken = "pk.eyJ1IjoicHJ2Y3UiLCJhIjoiY2piODQ3ZWRwNDZucDJ3c2hvY3AwZ25jdCJ9.U3hrNWPSaExsQhRYjUGTQQ";
+    mapboxgl.accessToken = "pk.eyJ1IjoicHJ2Y3UiLCJhIjoiY2...";
 	
 	var map = new mapboxgl.Map({
 	    container: "map",
@@ -123,10 +123,8 @@
 	});
 
 	//JSON Array fixed to work properly with AmCharts with a little help of Turf JS
-	//Same dateset of var geojson;
 	var data = [];
-	
-    turf.featureEach(geojson, function (currentFeature, featureIndex) {
+    	turf.featureEach(geojson, function (currentFeature, featureIndex) {
 		var object = {};
 		object["total"] = currentFeature.properties.pop_total;
 		object["males"] = currentFeature.properties.pop_males;
