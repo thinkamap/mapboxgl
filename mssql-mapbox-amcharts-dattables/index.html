@@ -1,0 +1,191 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<title>Ernesto's Map</title>
+	<!-- CSS -->
+	<link rel="stylesheet" href="/libraries/bootstrap/css/bootstrap.min.css">
+	<link href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css" rel="stylesheet" />
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs4/jszip-2.5.0/dt-1.10.16/af-2.2.2/b-1.5.1/b-colvis-1.5.1/b-flash-1.5.1/b-html5-1.5.1/b-print-1.5.1/cr-1.4.1/fc-3.2.4/fh-3.1.3/kt-2.3.2/r-2.2.1/rg-1.0.2/rr-1.2.3/sc-1.4.4/sl-1.2.5/datatables.min.css"/>
+	<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700" rel="stylesheet"/>
+	<style>
+		body {
+			font-family: 'Open Sans', sans-serif;
+	          color:#404040;
+			  color:rgba(0,0,0,0.75);
+			  font:12px/20px 'Open Sans', sans-serif;
+			  -webkit-font-smoothing: antialiased;
+			  font-weight: 600;
+		}
+		
+		#map {
+			width: 100%;
+			height: 500px;
+		}
+		
+		#chart {
+		  width: 100%;
+		  height: 300px;
+		}
+  	</style>
+</head>
+<body>
+	<div id="map"></div>
+	<div class="container">
+		<div class="row py-3">
+			<div class="col">
+				<h3>Total Population</h3>
+				<p>Source: Census Bureau, 2011. </p>
+				<div id="chart" class="chart"></div>
+			</div>
+		</div>
+		<div id="datatable" class="row mb-5">
+			<div class="col">
+				<h3>Dataset</h3>
+				<p>Source: Census Bureau, 2011. </p>
+				<table id="table" class="table table-striped table-bordered" style="width:100%">
+			        <thead>
+			            <tr>
+			                <th>Community</th>
+			                <th>Population</th>
+							<th>Males</th>
+							<th>Females</th>
+			            </tr>
+			        </thead>
+			    </table>
+    		</div>
+  		</div>
+	</div>
+	<!-- JS -->
+	<script   src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+	<script src="/libraries/bootstrap/js/bootstrap.min.js"></script>
+	<script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js"></script>
+	<script src="https://npmcdn.com/@turf/turf/turf.min.js"></script>
+	<script src="/libraries/amcharts/amcharts.js"></script>
+	<script src="/libraries/amcharts/serial.js"></script>
+	<script src="/libraries/amcharts/themes/light.js"></script>
+	<script type="text/javascript" src="https://cdn.datatables.net/v/bs4/jszip-2.5.0/dt-1.10.16/af-2.2.2/b-1.5.1/b-colvis-1.5.1/b-flash-1.5.1/b-html5-1.5.1/b-print-1.5.1/cr-1.4.1/fc-3.2.4/fh-3.1.3/kt-2.3.2/r-2.2.1/rg-1.0.2/rr-1.2.3/sc-1.4.4/sl-1.2.5/datatables.min.js"></script>
+	
+	<script>
+	//Global variable
+	var geojson;
+	
+	//MSSQL dataset
+    $.ajax({
+    	url: "/maps/ernesto/datos.php",
+        type: "GET",
+        dataType: "json",
+        async: false
+    }).done(function(data) {
+       	geojson = data
+    });
+    console.log(geojson)
+    
+    //Mapbox GL JS
+    mapboxgl.accessToken = "pk.eyJ1IjoicHJ2Y3UiLCJhIjoiY2piODQ3ZWRwNDZucDJ3c2hvY3AwZ25jdCJ9.U3hrNWPSaExsQhRYjUGTQQ";
+	
+	var map = new mapboxgl.Map({
+	    container: "map",
+	    style: "mapbox://styles/mapbox/dark-v9",
+	    center: [-67.250015,18.340216],
+	    zoom: 12 
+	});
+	
+	map.addControl(new mapboxgl.NavigationControl());
+	map.addControl(new mapboxgl.FullscreenControl());
+	map.scrollZoom.disable();
+	
+	map.on("load", function () {
+		map.addSource("points", {
+			"type": "geojson",
+			"data": geojson
+    	});
+    	
+    	map.addLayer({
+	        "id": "points",
+	        "type": "circle",
+	        "source": "points",
+	        "paint": {
+		    'circle-radius': {
+		        property: 'pop_total',
+		        type: 'exponential',
+		        stops: [
+		        	[865, 2],
+					[2931, 10]
+		        ]
+		    },
+      		'circle-opacity': 0.8,
+        	"circle-color": "#f9886c",
+        	}
+    	}, 'water-label');
+	});
+
+	//JSON Array fixed to work properly with AmCharts with a little help of Turf JS
+	//Same dateset of var geojson;
+	var data = [];
+	
+    turf.featureEach(geojson, function (currentFeature, featureIndex) {
+		var object = {};
+		object["total"] = currentFeature.properties.pop_total;
+		object["males"] = currentFeature.properties.pop_males;
+		object["females"] = currentFeature.properties.pop_females;
+		object["name"] = currentFeature.properties.name;
+		data.push(object);
+	});
+	console.log(data)	
+	
+	//AmCharts JS
+	var chart = AmCharts.makeChart( "chart", {
+		type: "serial",
+		theme: "light",
+		color: "#404040",
+		fontFamily: "Open Sans",
+		fontSize: 11,
+		dataProvider: data,
+		categoryField: "name",
+			categoryAxis: {
+			autoWrap: true,
+		},
+		legend: {
+	        horizontalGap: 10,
+	        maxColumns: 1,
+	        position: "right",
+			useGraphSettings: true,
+			markerSize: 10
+	    },
+		graphs: [{
+			fillAlphas: 1,
+			type: "column",
+			valueField: "total",
+			title: "Population"
+		},{
+			fillAlphas: 1,
+			type: "column",
+			valueField: "males",
+			title: "Males"
+		},{
+			fillAlphas: 1,
+			type: "column",
+			valueField: "females",
+			title: "Females"
+		}],
+	});
+	
+	//DataTable JS
+	var table = $('#table').DataTable( {
+		order: [[ 0, "desc" ]],
+		fixedHeader: true,
+		data: data,
+		responsive: true,
+		columns: [
+			{ data: "name" },
+			{ data: "total" },
+			{ data: "males" },
+			{ data: "females" },
+		]
+	});
+</script>
+</body>
+</html>
